@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from computer_scraping.computer_info import ComputerInfo
 from computer_scraping.website import get_page_or_throw, main_url, title_url, get_image
 
@@ -6,11 +8,11 @@ def strip_int(value: str):
     return int(''.join(filter(str.isdigit, value)))
 
 
-def parse_computer_html(computer_html):
-    computer_page_url = computer_html.find("a")
-    page_url = computer_page_url["href"]
-    computer_page = get_page_or_throw(main_url + page_url)
+def is_computer_parsed(page_url):
+    return (Path("data") / page_url).exists()
 
+
+def parse_computer(computer_page):
     price = computer_page.find(class_="autocalc-product-special").text
     price = strip_int(price)
 
@@ -43,7 +45,6 @@ def parse_computer_html(computer_html):
     hdd = strip_int(computer_info.get("Диск HDD", "0"))
 
     return ComputerInfo(
-        page_url,
         computer_page.find("h1").text,
         price,
         review_amount,
@@ -61,16 +62,21 @@ def parse_computer_html(computer_html):
 
 def parse_page_computers(page):
     for product in page.find_all(class_="product-inner"):
-        yield parse_computer_html(product)
+        computer_page_url = product.find("a")
+        page_url = computer_page_url["href"]
+        if is_computer_parsed(page_url): continue
+
+        computer_page = get_page_or_throw(main_url + page_url)
+        computer = parse_computer(computer_page)
+        computer.unique_name = page_url
+        print(f"parsed computer {computer.unique_name}")
+        yield computer
 
 
 def parse_all_computers():
     yield from parse_page_computers(get_page_or_throw(title_url))
-    current_page = 2
-    while True:
-        try:
-            yield from parse_page_computers(
-                get_page_or_throw(title_url, {"page": current_page})
-            )
-        except RuntimeError:
-            break
+    for current_page in range(2, 6):
+        print(f"processing page {current_page}")
+        yield from parse_page_computers(
+            get_page_or_throw(title_url, {"page": current_page})
+        )

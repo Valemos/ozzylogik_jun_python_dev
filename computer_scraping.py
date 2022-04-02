@@ -9,7 +9,7 @@ base_folder = Path("data")
 
 
 def save_photos(computer: ComputerInfo):
-    image_folder_path = base_folder / computer.url_name
+    image_folder_path = base_folder / computer.unique_name
     image_folder_path.mkdir(exist_ok=True, parents=True)
     saved_paths = []
     for i, image in enumerate(computer.photos):
