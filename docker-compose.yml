@@ -1,0 +1,35 @@
+version: '3.3'
+
+services:
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+
+  mysql-db:
+    image: mysql:latest
+    restart: always
+    environment:
+      MYSQL_USER: 'tester'
+      MYSQL_PASSWORD: 'strong_password'
+      MYSQL_ROOT_PASSWORD: 'strong_password'
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  mongodb:
+    image: mongo:latest
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: tester
+      MONGO_INITDB_ROOT_PASSWORD: strong_password
+    volumes:
+      - mongodb_data:/data/db
+
+volumes:
+  mysql_data:
+  mongodb_data:
